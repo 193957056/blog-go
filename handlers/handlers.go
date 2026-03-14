@@ -26,28 +26,37 @@ func CalculateReadTime(content string) int {
 func GetPosts(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	status := c.Query("status")
+	status := c.DefaultQuery("status", "published")
 	category := c.Query("category")
 
 	offset := (page - 1) * limit
 
 	var posts []models.Post
-	query := config.DB.Preload("Category").Preload("Tags").Order("created_at desc")
+	var total int64
 
-	if status != "" {
-		query = query.Where("status = ?", status)
+	// Build query
+	db := config.DB.Model(&models.Post{})
+
+	// Always filter by published unless explicitly requesting all
+	if status == "all" {
+		// Show all posts
 	} else {
-		query = query.Where("status = ?", "published")
+		db = db.Where("status = ?", "published")
 	}
 
 	if category != "" {
-		query = query.Joins("JOIN categories ON categories.id = posts.category_id").Where("categories.slug = ?", category)
+		db = db.Joins("JOIN categories ON categories.id = posts.category_id").Where("categories.slug = ?", category)
 	}
 
-	var total int64
-	query.Count(&total)
+	// Count total
+	db.Count(&total)
 
-	query.Offset(offset).Limit(limit).Find(&posts)
+	// Get posts with preloads
+	config.DB.Preload("Category").Preload("Tags").
+		Where("status = ?", "published").
+		Order("created_at desc").
+		Offset(offset).Limit(limit).
+		Find(&posts)
 
 	c.JSON(http.StatusOK, gin.H{
 		"posts": posts,

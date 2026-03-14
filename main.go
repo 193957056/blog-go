@@ -28,6 +28,7 @@ func main() {
 		&models.Post{},
 		&models.Category{},
 		&models.Tag{},
+		&models.User{},
 	)
 
 	// Seed default data
@@ -46,9 +47,24 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Root endpoint - API status
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"name":        "Lumina Blog API",
+			"version":     "2.0",
+			"status":      "running",
+			"endpoints":   []string{"/api/posts", "/api/categories", "/api/tags", "/api/stats", "/api/auth/login"},
+			"frontend":    "http://localhost:5173",
+			"admin":       "http://localhost:5173/admin",
+		})
+	})
+
 	// API routes
 	api := r.Group("/api")
 	{
+		// Auth routes (public)
+		routes.AuthRoutes(api)
+		
 		// Public routes
 		routes.PostRoutes(api)
 		routes.CategoryRoutes(api)
