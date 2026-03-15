@@ -1,0 +1,13 @@
+server:
+  port: "8081"
+
+database:
+  type: sqlite3
+  path: ./data/lumina.db
+  maxConns: 10
+
+backup:
+  directory: ./backups
+  maxBackups: 10
+  retainDays: 30
+  enableAutoBackup: true

@@ -1,0 +1,11 @@
+{
+  "article_id": 1,
+  "author": "admin",
+  "content": "First version content",
+  "created_at": "0001-01-01T00:00:00Z",
+  "slug": "hello-world",
+  "status": "published",
+  "title": "Hello World",
+  "updated_at": "0001-01-01T00:00:00Z",
+  "version": 1
+}

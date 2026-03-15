@@ -20,6 +20,7 @@ type Post struct {
 	Status      string         `gorm:"size:20;default:'draft'" json:"status"` // draft, published
 	ViewCount   int            `gorm:"default:0" json:"view_count"`
 	ReadTime    int            `json:"read_time"` // in minutes
+	Lang        string         `gorm:"size:10;default:'zh-CN'" json:"lang"` // Language: zh-CN, en, ja, etc.
 	CategoryID  uint           `json:"category_id"`
 	Category    Category       `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
 	Tags        []Tag          `gorm:"many2many:post_tags;" json:"tags,omitempty"`
@@ -99,6 +100,7 @@ func SeedData() {
 			Cover:       "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800",
 			Status:      "published",
 			ViewCount:   128,
+			Lang:        "zh-CN",
 			CategoryID:  catTech.ID,
 			Tags:        []Tag{tagVue, tagFrontend},
 		},
@@ -110,6 +112,7 @@ func SeedData() {
 			Cover:       "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800",
 			Status:      "published",
 			ViewCount:   256,
+			Lang:        "zh-CN",
 			CategoryID:  catTech.ID,
 			Tags:        []Tag{tagGo},
 		},
@@ -121,6 +124,7 @@ func SeedData() {
 			Cover:       "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800",
 			Status:      "published",
 			ViewCount:   89,
+			Lang:        "zh-CN",
 			CategoryID:  catDesign.ID,
 			Tags:        []Tag{tagFrontend},
 		},

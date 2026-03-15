@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"lumina-blog/config"
+	"lumina-blog/middleware"
 	"lumina-blog/models"
 	"lumina-blog/routes"
 
@@ -37,6 +38,9 @@ func main() {
 	// Setup router
 	r := gin.Default()
 
+	// Add performance middleware for tracking slow requests
+	r.Use(middleware.PerformanceMiddleware())
+
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000", "*"},
@@ -53,7 +57,7 @@ func main() {
 			"name":        "Lumina Blog API",
 			"version":     "2.0",
 			"status":      "running",
-			"endpoints":   []string{"/api/posts", "/api/categories", "/api/tags", "/api/stats", "/api/auth/login"},
+			"endpoints":   []string{"/api/posts", "/api/categories", "/api/tags", "/api/stats", "/api/stats/performance", "/api/cache/clear", "/api/image/process", "/api/health", "/api/auth/login", "/api/ai/polish", "/api/ai/summary", "/api/ai/seo", "/api/ai/translate", "/api/seo/analyze"},
 			"frontend":    "http://localhost:5173",
 			"admin":       "http://localhost:5173/admin",
 		})
@@ -70,6 +74,18 @@ func main() {
 		routes.CategoryRoutes(api)
 		routes.TagRoutes(api)
 		routes.StatsRoutes(api)
+
+		// SEO routes
+		routes.SEORoutes(api)
+
+		// AI assistant routes
+		routes.AIRoutes(api)
+
+		// Performance monitoring routes
+		routes.PerformanceRoutes(api)
+
+		// Backup and restore routes
+		routes.BackupRoutes(api)
 	}
 
 	// Serve static files
