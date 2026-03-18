@@ -1,0 +1,19 @@
+kind: pipeline
+type: ci
+name: default
+
+steps:
+  - name: build
+    type: run
+    spec:
+      container: golang:1.21-alpine
+      script:
+        - cd cmd
+        - go build -o ../blog .
+
+  - name: test
+    type: run
+    spec:
+      container: golang:1.21-alpine
+      script:
+        - go test ./...
