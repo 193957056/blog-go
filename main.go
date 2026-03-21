@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"lumina-blog/config"
+	"lumina-blog/handlers"
 	"lumina-blog/middleware"
 	"lumina-blog/models"
 	"lumina-blog/routes"
@@ -30,10 +31,14 @@ func main() {
 		&models.Category{},
 		&models.Tag{},
 		&models.User{},
+		&models.Comment{},
+		&models.Like{},
+		&models.Favorite{},
+		&models.Link{},
 	)
 
-	// Seed default data
-	models.SeedData()
+	// Skip SeedData for now to debug the DB issue
+	// models.SeedData()
 
 	// Setup router
 	r := gin.Default()
@@ -57,11 +62,15 @@ func main() {
 			"name":        "Lumina Blog API",
 			"version":     "2.0",
 			"status":      "running",
-			"endpoints":   []string{"/api/posts", "/api/categories", "/api/tags", "/api/stats", "/api/stats/performance", "/api/cache/clear", "/api/image/process", "/api/health", "/api/auth/login", "/api/ai/polish", "/api/ai/summary", "/api/ai/seo", "/api/ai/translate", "/api/seo/analyze"},
+			"endpoints":   []string{"/api/posts", "/api/categories", "/api/tags", "/api/stats", "/api/stats/performance", "/api/cache/clear", "/api/image/process", "/api/health", "/api/auth/login", "/api/ai/polish", "/api/ai/summary", "/api/ai/seo", "/api/ai/translate", "/api/seo/analyze", "/api/seo/config", "/api/seo/baidu-tongji-id"},
 			"frontend":    "http://localhost:5173",
 			"admin":       "http://localhost:5173/admin",
 		})
 	})
+
+	// SEO static pages
+	r.GET("/sitemap.xml", handlers.GenerateSitemapXML)
+	r.GET("/robots.txt", handlers.GenerateRobotsTxt)
 
 	// API routes
 	api := r.Group("/api")
@@ -86,6 +95,21 @@ func main() {
 
 		// Backup and restore routes
 		routes.BackupRoutes(api)
+
+		// Comment routes
+		routes.CommentRoutes(api)
+
+		// Search routes
+		routes.SearchRoutes(api)
+
+		// Like and favorite routes
+		routes.LikeFavoriteRoutes(api)
+
+		// Friend link routes
+		routes.LinkRoutes(api)
+
+		// Admin routes
+		routes.AdminRoutes(api)
 	}
 
 	// Serve static files

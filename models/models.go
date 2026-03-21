@@ -24,6 +24,10 @@ type Post struct {
 	CategoryID  uint           `json:"category_id"`
 	Category    Category       `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
 	Tags        []Tag          `gorm:"many2many:post_tags;" json:"tags,omitempty"`
+	
+	// SEO fields (computed, not stored in DB)
+	CanonicalURL   string `json:"canonical_url,omitempty"`
+	MetaDescription string `json:"meta_description,omitempty"`
 }
 
 type Category struct {

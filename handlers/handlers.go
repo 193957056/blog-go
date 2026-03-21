@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -13,6 +14,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+// stripHTML removes HTML tags from content
+func stripHTML(html string) string {
+	// Replace <br> and </p> with spaces
+	re := regexp.MustCompile(`<[^>]+>`)
+	text := re.ReplaceAllString(html, "")
+	// Clean up whitespace
+	text = strings.Join(strings.Fields(text), " ")
+	return text
+}
 
 // CalculateReadTime estimates reading time in minutes
 func CalculateReadTime(content string) int {
@@ -127,6 +138,24 @@ func GetPost(c *gin.Context) {
 
 	// Increment view count
 	config.DB.Model(&post).Update("view_count", post.ViewCount+1)
+
+	// Add SEO fields
+	post.CanonicalURL = config.SEOConfig.SiteURL + "/post/" + post.Slug
+	
+	// Use excerpt as meta description, or generate from content
+	if post.Excerpt != "" {
+		post.MetaDescription = post.Excerpt
+	} else {
+		// Generate from first 160 chars of content (strip markdown/html)
+		desc := stripHTML(post.Content)
+		if len(desc) > 160 {
+			desc = desc[:160]
+			if lastSpace := strings.LastIndex(desc, " "); lastSpace > 0 {
+				desc = desc[:lastSpace] + "..."
+			}
+		}
+		post.MetaDescription = desc
+	}
 
 	// Cache the response
 	cache.ArticleCache.Set(cacheKey, post)

@@ -1,4 +1,4 @@
-module github.com/lumina/blog
+module lumina-blog
 
 go 1.23.0
 

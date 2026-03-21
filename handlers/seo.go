@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"lumina-blog/config"
+	"lumina-blog/models"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -340,4 +343,101 @@ func SEOAnalyze(c *gin.Context) {
 		Success: true,
 		Data:    result,
 	})
+}
+
+// GetBaiduTongjiID returns the Baidu Tongji (统计) ID for frontend use
+func GetBaiduTongjiID(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"baidu_tongji_id": config.SEOConfig.BaiduTongjiID,
+		"enabled":         config.SEOConfig.BaiduTongjiID != "",
+	})
+}
+
+// GetSiteConfig returns site configuration for SEO
+func GetSiteConfig(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"site_name":        config.SEOConfig.SiteName,
+		"site_url":         config.SEOConfig.SiteURL,
+		"description":      config.SEOConfig.Description,
+		"baidu_tongji_id":  config.SEOConfig.BaiduTongjiID,
+		"google_analytics": config.SEOConfig.GoogleAnalytics,
+	})
+}
+
+// GenerateSitemapXML generates XML sitemap for search engines
+func GenerateSitemapXML(c *gin.Context) {
+	var posts []models.Post
+	config.DB.Where("status = ?", "published").Find(&posts)
+	
+	var sitemap strings.Builder
+	sitemap.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
+	sitemap.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
+	
+	// Add static pages
+	staticPages := []struct{
+		loc       string
+		priority  string
+	}{
+		{config.SEOConfig.SiteURL + "/", "1.0"},
+		{config.SEOConfig.SiteURL + "/posts", "0.9"},
+		{config.SEOConfig.SiteURL + "/categories", "0.7"},
+		{config.SEOConfig.SiteURL + "/tags", "0.7"},
+		{config.SEOConfig.SiteURL + "/about", "0.6"},
+	}
+	
+	for _, page := range staticPages {
+		sitemap.WriteString(`  <url>` + "\n")
+		sitemap.WriteString(`    <loc>` + page.loc + `</loc>` + "\n")
+		sitemap.WriteString(`    <changefreq>weekly</changefreq>` + "\n")
+		sitemap.WriteString(`    <priority>` + page.priority + `</priority>` + "\n")
+		sitemap.WriteString(`  </url>` + "\n")
+	}
+	
+	// Add blog posts
+	for _, post := range posts {
+		postURL := config.SEOConfig.SiteURL + "/post/" + post.Slug
+		changefreq := "weekly"
+		if post.ViewCount > 1000 {
+			changefreq = "daily"
+		}
+		
+		sitemap.WriteString(`  <url>` + "\n")
+		sitemap.WriteString(`    <loc>` + postURL + `</loc>` + "\n")
+		sitemap.WriteString(`    <lastmod>` + post.UpdatedAt.Format("2006-01-02") + `</lastmod>` + "\n")
+		sitemap.WriteString(`    <changefreq>` + changefreq + `</changefreq>` + "\n")
+		sitemap.WriteString(`    <priority>0.8</priority>` + "\n")
+		sitemap.WriteString(`  </url>` + "\n")
+	}
+	
+	sitemap.WriteString(`</urlset>`)
+	
+	c.Header("Content-Type", "application/xml")
+	c.String(http.StatusOK, sitemap.String())
+}
+
+// GenerateRobotsTxt generates robots.txt content
+func GenerateRobotsTxt(c *gin.Context) {
+	var robots strings.Builder
+	robots.WriteString("User-agent: *\n")
+	robots.WriteString("Allow: /\n")
+	robots.WriteString("\n")
+	
+	// Disallow admin and API paths
+	robots.WriteString("Disallow: /api/admin/\n")
+	robots.WriteString("Disallow: /api/auth/\n")
+	robots.WriteString("Disallow: /api/backups/\n")
+	robots.WriteString("Disallow: /api/comments\n")
+	robots.WriteString("\n")
+	
+	// Sitemap location
+	robots.WriteString("Sitemap: " + config.SEOConfig.SiteURL + "/sitemap.xml\n")
+	
+	// Baidu-specific
+	robots.WriteString("\n")
+	robots.WriteString("# Baidu Bot\n")
+	robots.WriteString("User-agent: Baiduspider\n")
+	robots.WriteString("Allow: /\n")
+	
+	c.Header("Content-Type", "text/plain")
+	c.String(http.StatusOK, robots.String())
 }

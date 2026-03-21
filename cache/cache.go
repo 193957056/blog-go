@@ -50,33 +50,22 @@ func (c *Cache) cleanup() {
 
 // Get retrieves a value from cache
 func (c *Cache) Get(key string) (interface{}, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	
 	item, found := c.items[key]
 	if !found {
-		c.mu.RUnlock()
-		c.mu.Lock()
 		c.misses++
-		c.mu.Unlock()
-		c.mu.RLock()
 		return nil, false
 	}
 	
 	if time.Now().After(item.Expiration) {
-		c.mu.RUnlock()
-		c.mu.Lock()
 		delete(c.items, key)
 		c.misses++
-		c.mu.Unlock()
 		return nil, false
 	}
 	
-	c.mu.RUnlock()
-	c.mu.Lock()
 	c.hits++
-	c.mu.Unlock()
-	
 	return item.Value, true
 }
 
@@ -109,15 +98,15 @@ func (c *Cache) Clear() {
 
 // Stats returns cache statistics
 func (c *Cache) Stats() (hits, misses int64, size int) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return c.hits, c.misses, len(c.items)
 }
 
 // HitRate returns the cache hit rate as a percentage
 func (c *Cache) HitRate() float64 {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	
 	total := c.hits + c.misses
 	if total == 0 {

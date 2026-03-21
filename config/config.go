@@ -3,6 +3,7 @@ package config
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -20,6 +21,15 @@ type DBStats struct {
 
 var DB *gorm.DB
 
+// SEOConfig holds SEO-related configuration
+var SEOConfig struct {
+	SiteName        string
+	SiteURL         string
+	Description     string
+	BaiduTongjiID   string
+	GoogleAnalytics string
+}
+
 func InitDB() {
 	var err error
 
@@ -33,6 +43,30 @@ func InitDB() {
 	}
 
 	log.Println("Database connected successfully")
+	
+	// Load SEO config from environment
+	LoadSEOConfig()
+}
+
+// LoadSEOConfig loads SEO configuration from environment variables
+func LoadSEOConfig() {
+	SEOConfig.SiteName = os.Getenv("SITE_NAME")
+	if SEOConfig.SiteName == "" {
+		SEOConfig.SiteName = "Lumina Blog"
+	}
+	
+	SEOConfig.SiteURL = os.Getenv("SITE_URL")
+	if SEOConfig.SiteURL == "" {
+		SEOConfig.SiteURL = "https://example.com"
+	}
+	
+	SEOConfig.Description = os.Getenv("SITE_DESCRIPTION")
+	if SEOConfig.Description == "" {
+		SEOConfig.Description = "A beautiful blog"
+	}
+	
+	SEOConfig.BaiduTongjiID = os.Getenv("BAIDU_TONGJI_ID")
+	SEOConfig.GoogleAnalytics = os.Getenv("GOOGLE_ANALYTICS_ID")
 }
 
 // GetDBStats returns database connection pool statistics

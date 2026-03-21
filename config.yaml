@@ -3,7 +3,7 @@ server:
 
 database:
   type: sqlite3
-  path: ./data/lumina.db
+  path: ./lumina.db
   maxConns: 10
 
 backup:
